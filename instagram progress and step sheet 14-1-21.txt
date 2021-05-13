@@ -1,0 +1,1279 @@
+**************************************************************************************************************
+					clone instagram 
+**************************************************************************************************************
+			STEP 1
+			......
+			npm install 
+			npm init
+			app.js
+-------------------------------------------------------- 
+			in app.js file 			A LOCAL SERVER 
+--------------
+const express = require ('express');
+const app = express ();
+const PORT = 5000;
+app.get ('/', (req, res) => {
+  res.send ('Hello World');
+});
+app.listen (PORT, () => {
+  console.log ('Server is Running on Port ',PORT);
+});
+
+**************************************************************************************************************
+			STEP 2
+			......
+			npm i nodemon -g
+			in app.js file  add->
+---------------------
+const customMiddleware = (res,req,next) => {
+  console.log ('middleware executed');
+  next();
+};
+app.use (customMiddleware);
+////////////////////////////////////////////////////////////////////////////////////////////////////
+total code will be 
+------------------
+const express = require ('express');
+const app = express ();
+const PORT = 5000;
+const customMiddleware = (res, req, next) => {
+  console.log ('middleware executed');
+  next ();
+};
+app.use (customMiddleware);
+app.get ('/', (req, res) => {
+  res.send ('Hello World');
+});
+app.listen (PORT, () => {
+  console.log ('Server is Running on Port ', PORT);
+});
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+**************************************************************************************************************
+			STEP 3 
+			......
+			npm i mongoose 
+			creating keys.js ->
+-------------------
+odule.exports={
+    MONGO_URI = "mongodb+srv://apidb:apidb123@apibuild.kbnwv.mongodb.net/instagram?retryWrites=true&w=majority"
+}
+-------------------
+			in app.js->
+-----------
+const mongoose = require('mongoose')
+mongoose.connect(MONGO_URI)
+mongoose.connection.on('connected',()=>{
+    console.log('connected to Mongoose')}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+total code will be in app.js 
+const express = require ('express');
+const app = express ();
+const PORT = 5000;
+const mongoose = require ('mongoose');
+const {MONGO_URI} = require ('./keys');
+mongoose.connect (MONGO_URI);
+mongoose.connection.on ('connected', () => {
+  console.log ('connected to Mongoose');
+});
+// const customMiddleware = (res, req, next) => {
+//   console.log ('middleware executed');
+//   next ();
+// };
+// app.use (customMiddleware);
+// app.get ('/', (req, res) => {
+//   res.send ('Hello World');
+// });
+app.listen (PORT, () => {
+  console.log ('Server is Running on Port ', PORT);
+});
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+***************************************************************************************************************************
+			STEP 4
+			......
+			creating folder models->
+------------------------
+			creating file user.js in models ->
+----------------------------------
+			creating schemas
+//creating schemas forr storing data in mongoose
+const mongoose = require ('mongoose');
+const UserSchema = new mongoose.Schema ({
+  name: {
+    type: String,
+    require: true,
+  },
+
+  email: {
+    type: String,
+    require: true,
+  },
+  password: {
+    type: String,
+    require: true,
+  },
+  timestamp: {type: Date, default: Date.now},
+});
+mongoose.model ('User', UserSchema);
+//we have not used module.exports here because if we use then sometimes we canuse  this model multipurposly
+//it will show error if we use some where esle to avoid that we havent used it 
+----------------------------------
+-----------------------
+			now calling this model in app.js ->
+require('./models/user')
+//////////////////////////////////////////////////////////////////////////////////////////
+new code will be of app.js 
+const express = require ('express');
+const app = express ();
+const PORT = 5000;
+const mongoose = require ('mongoose');
+const {MONGOURI} = require ('./keys');
+mongoose.connect (MONGOURI, {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connection.on ('connected', () => {
+  console.log ('connected to Mongoose');
+});
+mongoose.connection.on ('error', () => {
+  console.log ('Mongoose not connected ', error);
+});
+require('./models/user')
+// const customMiddleware = (res, req, next) => {
+//   console.log ('middleware executed');
+//   next ();
+// };
+// app.use (customMiddleware);
+// app.get ('/', (req, res) => {
+//   res.send ('Hello World');
+// });
+app.listen (PORT, () => {
+  console.log ('Server is Running on Port ', PORT);
+});
+
+//////////////////////////////////////////////////////////////////////////////////////////
+*****************************************************************************************************************************
+			STEP 5
+			......
+			creating new folder routes.js
+-----------------------------
+			creating new file auth.js
+------------------------
+const express = require ('express');
+
+const router = express.Router ();
+
+router.get ('', (req, res) => {
+  res.send ('Hello');
+});
+
+module.exports = router;
+-----------------------
+			importing file in app.js
+app.use (require ('./routes/auth.js'))
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+code will be of app.js
+const express = require ('express');
+const app = express ();
+const PORT = 5000;
+const mongoose = require ('mongoose');
+const {MONGOURI} = require ('./keys');
+mongoose.connect (MONGOURI, {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connection.on ('connected', () => {
+  console.log ('connected to Mongoose');
+});
+mongoose.connection.on ('error', () => {
+  console.log ('Mongoose not connected ', error);
+});
+require ('./models/user');
+app.use (require ('./routes/auth.js'))
+// const customMiddleware = (res, req, next) => {
+//   console.log ('middleware executed');
+//   next ();
+// };
+// app.use (customMiddleware);
+// app.get ('/', (req, res) => {
+//   res.send ('Hello World');
+// });
+app.listen (PORT, () => {
+  console.log ('Server is Running on Port ', PORT);
+});
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+*********************************************************************************************************************
+			STEP 6
+			......
+			in app.js->
+-----------
+app.use (express.json ());
+			//we have to write this before app.use( models) 
+-----------
+in auth.js->
+------------
+*-*-*-*-*-*-*-**-*-*-*-*-*-*-*-
+			//this is just basic file for get the data of postmant body into the console
+router.post ('/signup', (req, res) => {
+  console.log (req.body);
+*-*-*-*-**-*-*-**-*-*-*-*-*-*-*-
+			FOR posting Data
+			the code is ->
+--------------
+router.post ('/signup', (req, res) => {
+  //basicaly this is for posting
+  const {name, email, password} = req.body;
+  //destructing the body data
+  if (!name || !email || !password) {
+    //appling validation this filed are required
+    res.status (422).json ({error: 'please add all the field'});
+  }
+  User.findOne ({email: email})
+    //finding the texted data if the data exist then this code will run
+    .then (savedUser => {
+      //if we get then we will not let same data to get saved
+      if (savedUser) {
+        return res
+          .status (422)
+          .json ({error: 'User already exists with that email'});
+      }
+      //is the data is new then we will save the data
+      const user = new User ({
+        email,
+        password,
+        name,
+      });
+      //for saving we will use .save
+      user
+        .save ()
+        .then (user => {
+          res.json ({message: 'saved succesfuly'});
+        })
+        .catch (err => {
+          console.log (err);
+        });
+    })
+    .catch (err => {
+      console.log (err);
+    });
+
+  //   res.json ({message: 'successfully posted'});
+});
+-------------------
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+code of app js will be
+
+const express = require ('express');
+const router = express.Router ();
+const mongoose = require ('mongoose');
+const User = mongoose.model ('User');
+router.get ('', (req, res) => {
+  res.send ('Hello');
+});
+
+router.post ('/signup', (req, res) => {
+  //basicaly this is for posting
+  const {name, email, password} = req.body;
+  //destructing the body data
+  if (!name || !email || !password) {
+    //appling validation this filed are required
+    res.status (422).json ({error: 'please add all the field'});
+  }
+  User.findOne ({email: email})
+    //finding the texted data if the data exist then this code will run
+    .then (savedUser => {
+      //if we get then we will not let same data to get saved
+      if (savedUser) {
+        return res
+          .status (422)
+          .json ({error: 'User already exists with that email'});
+      }
+      //is the data is new then we will save the data
+      const user = new User ({
+        email,
+        password,
+        name,
+      });
+      //for saving we will use .save
+      user
+        .save ()
+        .then (user => {
+          res.json ({message: 'saved succesfuly'});
+        })
+        .catch (err => {
+          console.log (err);
+        });
+    })
+    .catch (err => {
+      console.log (err);
+    });
+
+  //   res.json ({message: 'successfully posted'});
+});
+
+router.get ('/get', (res, req) => {
+  const d = User.find ();
+  return res.status (400).json ({success: true, data: d});
+});
+module.exports = router;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+*******************************************************************************************************************************************************************
+			STEP 7 - HASHING THE PASSWORD
+			......
+			npm install bcryptjs
+-------------------------------
+			declaring the bcrypt
+-----------------------------
+const  bcrypt =reqiure('bcryptjs')
+-----------------------------------------------
+now making the password hashed
+bcrypt.hash (password, 12).then (hashedpassword => { the new user data })
+						     ------------------
+
+the new user data will be ->
+				 bcrypt.hash (password, 12).then (hashedpassword => {
+     				   //now is the data is new then we will save the data
+    				    const user = new User ({
+  				        email,
+  				        //here we used hasshed password
+   				       password: hashedpassword,
+   				       name,
+  				     });
+   				     //for saving we will use .save
+    				    user
+     				     .save ()
+     				     .then (user => {
+     				       res.json ({message: 'saved succesfuly'});
+     				     })
+     				     .catch (err => {
+     				       console.log (err);
+         				 });
+     				 });
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+---------------------------
+				
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+***************************************************************************************************************
+			STEP 8 SIGN UP CODE 
+			......
+			making signin
+			but here we have to dccrypt the password 
+//the code for SIGN UP 
+router.post ('/signin', (req, res) => {
+  const {email, password} = req.body;
+  if (!email || !password) {
+    return res.status (422).json ({error: 'please add or password'});
+  }
+  User.findOne ({email: email}).then (savedUser => {
+    if (!savedUser) {
+      return res.status (422).json ({error: 'Invalid Email or Password'});
+    }
+    bcrypt
+      .compare (password, savedUser.password)
+      .then (doMatch => {
+        if (doMatch) {
+          res.json ({message: 'sucessfully signed in'});
+        } else {
+          return res.status (422).json ({error: 'Invalid Email or Password'});
+        }
+      })
+      .catch (err => {
+        console.log (err);
+      });
+  });
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+**************************************************************************************************************
+		STEP 10 - GENERATING JWT TOKEN FOR SUCCESSFULLY LOGED IN USER
+		......
+		npm install jsonwebtoken
+		require the jsonwebtoken in auth
+		now
+		for scereate key we will get token for each id 
+		we will add ->
+
+const token = jwt.sign ({_id: savedUser._id}, JWT_SECRET);
+          res.json ({token});
+	
+		in auth file 
+		and secrete key in keys folder
+
+JWT_SECRET: 'qwertyjwtsecretkey'
+
+		requiring jsonwebtoken AND jwt secret in auth.js
+
+const jwt = require ('jsonwebtoken');
+onst {JWT_SECRET} = require ('../keys');
+------------------
+*********************************************************************************************************************
+
+		STEP 9 - Authorization of jwt token
+		......
+		first make a middleware which will verify the token
+		creating new folder -> Middleware
+		creating new file in Middleware-> requirelogin.js 
+		now to add the middleware in auth.js 
+-----------------
+const requirelogin = require ('../Middleware/requirelogin');
+router.get ('/protected', requirelogin, (req, res) => {
+  res.send ('Hello User');
+});
+-----------------
+////// CODE for the authorization is in middleware /requirelogin.js
+
+const jwt = require ('jsonwebtoken');
+const {JWT_SECRET} = require ('../keys');
+const mongoose = require ('mongoose');
+const User = mongoose.model ('User');
+module.exports = (req, res, next) => {
+  const {authorization} = req.headers;
+  if (!authorization) {
+    return res.status (401).json ({error: 'you must be logged in..'});
+  }
+  const token = authorization.replace ('Bearer ','');
+  jwt.verify (token, JWT_SECRET, (err, payload) => {
+    if (err) {
+      return res.status (401).json ({error: 'you must be logged in'});
+    }
+    const {_id} = payload;
+    User.findById (_id).then (userdata => {
+      req.user = userdata;
+next ();
+    });
+    
+  });
+};
+
+///////
+		
+*******************************************************************************************************************
+
+		STEP 11 - POST SCHEMA AND POST RULE (connecting two schema useing ref, and making seprate routes and fetching first schema  details using middleware)
+		......
+		while creating post schema we want to have merged  refrence of user in it 
+as we are verifying by middleware so we are storing all details in req.user
+		for that we have to create schema seprate and to refrence it with existance schema 
+		and then we have to create two routes and then give that refrence 	
+		creating file in routes -> post.js
+
+///////// code for creating post schema and 
+const express = require ('express');
+const router = express.Router ();
+const mongoose = require ('mongoose');
+const requirelogin = require ('../Middleware/requirelogin');
+const Post = mongoose.model ('Post');
+router.post ('/createpost', requirelogin, (req, res) => {
+  const {title, body} = req.body;
+  if (!title || !body) {
+    return res.status (422).json ({error: 'Please add title and body both'});
+  }
+//we do not want to save password so we have puted undefined in password
+  req.user.password = undefined;
+  const post = new Post ({
+    //res.send ('ok');
+    //console.log (req.user);
+    title,
+    body,
+    postedBy: req.user, //refrence of userschema
+  });
+  post
+    .save ()
+    .then (result => {
+      res.json ({post: result});
+    })
+    .catch (err => {
+      console.log (err);
+    });
+});
+module.exports = router;
+
+/////////
+*******************************************************************************************************************
+		step 12 - getting all the post (it will show all the detail with using populate)
+
+router.get ('/allpost', (req, res) => {
+  Post.find ()
+    .populate ('postedBy', '_id name email')
+    .then (posts => {
+      res.json ({posts});
+    })
+    .catch (err => {
+      console.log (err);
+    });
+});
+********************************************************************************************************************
+					FRONT END Part 
+********************************************************************************************************************
+		STEP 13 - MAKING FRONTEND UI 
+
+		npx create-react-app instagramfrontend
+		npm i react-router
+		
+		here this was a basic setup so now to coustimize it 
+		1) we will make navigation bar in the project inside src/component/navbar.js->
+--------------------------------------------------------
+import React from 'react';
+import {Link} from 'react-router-dom';
+const NavBar = () => {
+  return (
+    <nav>
+      <div class="nav-wrapper white ">
+//here we have used link to insted of <a href> because <link to> will do not reload the the full page it will just change the content  as react is the single page web aplication  
+        <Link to="Home" class="brand-logo">Logo</Link>
+        <ul id="nav-mobile" class="right hide-on-med-and-down">
+          <li><Link to="Signin">SignIn</Link></li>
+          <li><Link to="Signup">SignUp</Link></li>
+          <li><Link to="Profile">Profile</Link></li>
+        </ul>
+      </div>
+    </nav>
+  );
+};
+export default NavBar;
+
+--------------------------------------------------------
+		2)now making Home screen , Profile screen, Signin screen, Signup Screen 
+		  
+		  in src/component/screen/Home.js,all screens
+--------------------------------------------------
+/////////////////////////////home screen//////////////////////////////////////////
+import React from 'react';
+const Home = () => {
+  return <h1>Home screen </h1>;
+};
+export default Home;
+/////////////////////////////profile screen//////////////////////////////////////////
+import React from 'react';
+const Profile = () => {
+  return <h1>Profile screen </h1>;
+};
+export default Profile;
+
+/////////////////////////////signin screen//////////////////////////////////////////
+import React from 'react';
+const Login = () => {
+  return <h1>Login screen </h1>;
+};
+export default Login;
+
+/////////////////////////////signup screen//////////////////////////////////////////
+import React from 'react';
+const Signup = () => {
+  return <h1>Signup screen </h1>;
+};
+export default Signup;
+
+-------------------------------------------------- 
+			
+		3)
+ 
+
+
+
+////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////
+
+
+
+
+***************************************************************************************************************************
+					CONNECTION OF API WITH FRONTEND (MERGING FRONTEND AND BACKEND) using usestate
+***************************************************************************************************************************
+
+		STEP 1 OF 15 
+
+		as we know the front end and back end part is ready so now 
+		we will run both frontend end server 
+		as our FRONTEND server is running on http://localhoast:3000 [PORT]
+		and BACKEND api server is running on http://localhoast:5000 [PORT] 
+		now both port are diffrent so this will face an *CORS ISSUE* which will block our request
+		to overcome this issue there are 2 steps
+		steps 1 installing NPM CORS into the project(with this it can alow) OR
+		steps 2 we can USE PROXY
+		go to package.json and we have to add in first object area
+ 
+"proxy":"http://localhost:5000",
+		
+		it will pretend that it is runninng on 5000 port
+		this will make server feels on the same port and then it will send data to orignal port 5000
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+		STEP 2 OF 15
+		we will require 
+
+import React, {useState} from 'react';
+import {Link, useHistory} from 'react-router-dom';
+
+		for sending data 
+		then in signup.js->
+-----------------------------------
+const signup()=>{
+//usehistory will showthe massage and push the user to directed url
+const history = useHistory ();
+const [name, setName] = useState ('');
+const [password, setPassword] = useState ('');
+const [email, setEmail] = useState ('');
+	
+		//here postData will send the data into the api having url
+	
+const PostData = () => {
+    fetch ('/signup', {
+      method: 'post',//declaring the method which we are using 
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify ({
+        name: '',// if the name are same then we will write is as it is or ELSE fullname:name
+        password: '',
+        email: '',
+      }),
+    })
+      .then (res => res.json ())
+      .then (data => {
+//here i have used toast animation to show error and installed  (npm install materialize-css@next) and imported (import M from 'materialize-css';)
+        iif (data.error) {
+          M.toast ({html: data.error, classes: '#c62828 red darken-3'});
+        } else {
+          M.toast ({html: data.message, classes: '#43a047 green darken-1'});
+//here if the user doesnt get any error then we are showing successfull and directing user to signin page
+          history.push ('/signin');
+        }
+      });
+  };
+
+		NOW TO SET THIS we will use on clik event on the SIGNUP button
+
+onClick={() => PostData ()} 
+
+
+----------------------------------------
+		
+			adding validation in postData =>(){}
+-------------------------------
+if (
+      !/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test (
+        email
+      )
+    ) {
+      return M.toast ({html: 'invalid email', classes: '#c62828 red darken-3'});
+    }
+------------------------------
+			fetching ('/signin') and methode is 'post'
+
+			here we have fatch the loged in user token from auth.js 
+			and token is console.log(data)
+			made login sccren and directed it to  history.push ('/'); that is home screen
+
+
+
+			so login in screen is=>
+
+/////////////////////////**** LOGIN.JS SCREEN *****//////////////////////////
+import React, {useState} from 'react';
+import {Link, useHistory} from 'react-router-dom';
+import M from 'materialize-css';
+const Login = () => {
+  const history = useHistory ();
+  const [password, setPassword] = useState ('');
+  const [email, setEmail] = useState ('');
+
+  const PostData = () => {
+    if (
+      !/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test (
+        email
+      )
+    ) {
+      return M.toast ({html: 'invalid email', classes: '#c62828 red darken-3'});
+    }
+
+    fetch ('/signin', {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify ({
+        password,
+        email,
+      }),
+    })
+      .then (res => res.json ())
+      .then (data => {
+        console.log (data);
+        if (data.error) {
+          M.toast ({html: data.error, classes: '#c62828 red darken-3'});
+        } else {
+          M.toast ({
+            html: 'welcome to instagram ',
+            classes: '#43a047 green darken-1',
+          });
+          history.push ('/');
+        }
+      })
+      .catch (err => {
+        console.log (err);
+      });
+  };
+  return (
+    <div className="mycard">
+      <div className="card auth-card input-field">
+        <h2>Instagram</h2>
+        <input
+          type="text"
+          placeholder="Email"
+          value={email}
+          onChange={e => setEmail (e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={e => setPassword (e.target.value)}
+        />
+        <h6 className="fp"> forget password? </h6>
+
+        <button
+          className="btn waves-effect waves.light #64b5f6 blue darken-2"
+          onClick={() => PostData ()}
+        >
+          Login
+        </button>
+        <h5>
+          <Link to="/Signup">Create an Account? </Link>
+        </h5>
+      </div>
+    </div>
+  );
+};
+export default Login;
+
+///////////////////////////////////////////////////
+
+******************************************************************************************************************************************************************
+			STEP 3 OF 15 (UPLODING IMAGE TO CLOUDNIRY)
+			
+			here we will make first hook and then we do trial to uplog the image then it is comming in e.target.files[0] (0th index)
+			
+			now to post the image in server we are using cloudinary  storage
+			
+			CREATING METHOD FOR UPLODING IMAGE TO CLOUDINARY
+		this is for storing upload photo in cloudnary (but this will not store it on our server)
+------------------------------------------------------------------------------------------------------
+const data = new FormData ();
+    data.append ('file', image);
+    data.append ('upload_preset', 'insta-clone');
+    //data.append ('<type of preset>','<NAME OF THE UPLOAD PRESET>')
+    data.append ('cloud_name', 'instagramimage');
+    //data.append ('<CLOUD NAME>','<NAME OF THE could>')
+    fetch ('https://api.cloudinary.com/v1_1/instagramimage/image/upload', {
+      method: 'post',
+      body: data,
+    })
+      .then (res => res.json ())
+      .then (data => {
+        setUrl (data.url);
+        console.log (data);
+      })
+      .catch (err => console.log (err));
+
+-------------------------------------------------------------------------------------------------------
+		creating usestate of setUrl =>setUrl (data.url);//for storing pic data into url varialble 
+		we will make another 
+		now adding variable to store into the server NAMED AS PIC
+		giving it the path sa url:pic//(HERE CLOUDNARY WILL GIV THE URL LINK  THEN WE STORING THATA LINK INTO OR SERVER )
+		
+---------------------------------------------------------------------------------------------------------------------------------
+		STEP 4 of 15 
+		now storing the urse data,token into localstorage
+---------------------------
+localStorage.setItem ('jwt', data.token);
+localStorage.setItem ('user', JSON.stringify (data.user));
+		and then athorized it in creactpost header and put this berar token there which will get us login
+--------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+ 
+			
+		STEP 5 of 15 (context api)   Context is designed to share data that can be considered “global”
+
+	CONTEXT AND REDUX  ( what i learnt now is we use this to ristrict user to view other pages "if he is not loged in" )
+
+				In src folder creating now folder named reducers 
+				and in that file named userReducer.js 
+-----
+export const initialState = null
+export const reducer = (state, action) => {
+  if (action.type == 'USER') {
+    return action.payload;
+  }
+  return state;
+};
+
+-----
+
+
+----------------------------------------------  NOW IN APP.JS ----------
+import React, {useEffect, createContext} from 'react';
+const UserContext = createContext ();
+const Routing = () => {
+const history = useHistory ();
+  useEffect (() => {
+    const user = JSON.parse (localStorage.getItem ('user'));
+    //console.log (typeof user, user);  for checking the type of user is it a string?
+    if (user) {
+      history.push ('/');
+    } else {
+      history.push ('/Signin');
+    }
+  }, []);
+  return (
+    <Switch>
+      <Route exact path="/">
+        <Home />
+      </Route>
+      <Route exact path="/Signin">
+        <Signin />
+      </Route>
+      <Route exact path="/Signup">
+        <Signup />
+      </Route>
+      <Route exact path="/Profile">
+        <Profile />
+      </Route>
+      <Route exact path="/createpost">
+        <CreatePost />
+      </Route>
+    </Switch>
+  );
+};
+------------------------------------------------------			
+			here we are first geting the history of the user that user got token or not to send the user into new page etc 
+
+-------------------------
+import {BrowserRouter, Route, Switch, useHistory} from 'react-router-dom';
+
+				here are the hook we used 
+				switch is used to get route one at a time 
+				useHistroy to get history of user 
+-------------------------
+				now to link initial state with a ruducer modifying 
+				  
+import React, {useEffect, createContext,useReducer} from 'react';
+			Context is designed to share data that can be considered “global” for a tree of React components,
+			 such as the current authenticated user etc
+-------------------
+			 	here what i understand is we are using contest api because if the user come to this website
+				then he should  have the token to view th page  if the do not have the token then he will be 
+				redirected to signin screen
+				will not have the access to view inside the instagram application 
+				
+				here uptil now we have written
+------------------
+export const UserContext = createContext ();  
+
+in function app(){ 		// where the retrun statemenmt is written to get nav bar and etc
+				here we are destructuring state and dispatch from usereducer and bring out the state 
+
+ const [state, dispatch] = useReducer (reducer, initialState);
+
+
+}
+
+				now by doing this 
+				if the user doesnot have valid token then he will we redirected to login screen
+		issue 1--	but user can stil view home page now and 
+		issue 2--	local storage token  problem
+-------------------------------------------------------------------------------------------------------------------------
+			STEP 6 of 15
+			here but if user doesnot not loged out and if he cose the browser the token which was saved
+			 in local storage should be login is he run the application again 
+
+			For if user visits again then he should be able to view his protected resources 				
+			for that in app.js we are importing  'usecontext'from react   
+----
+const {state, dispatch} = useContext (UserContext);	
+if (user) {		
+dispatch ({type: 'USER', payload: user});
+history.push ('/');
+----
+-----------------------------------------------------------------------------------------------------------------------------
+			STEP 16 (is navigation  hiding some links is user is logedin)
+
+				if user doesnot have token then hiding ssome of the link
+--------------------NOW IN NAVBAR.JS ------------------------
+const renderList = () => {
+    //2.18-7/2/21
+    //here state contain id_name and email
+    if (state) {
+      return [
+        <li><Link to="Profile">Profile</Link></li>,
+        <li><Link to="CreatePost">Create Post</Link></li>
+      ]
+    } else {
+      return [
+        <li><Link to="Signin">SignIn</Link></li>,
+        <li><Link to="Signup">SignUp</Link></li>,
+      ];
+    }
+
+			And by this we wil have two option if this or that 
+			here we will declare {renderList()}               but not <renderList/> ? dont know the reason
+
+			ISSUE 1 by this user should have the token to see profile and creatpost but 
+				he can access profile by clickin on INSTAGRAM icon because react is dynamic withou refreshing 
+----------------------------------------------------------------------------
+			FOR that above ISSUE 1 
+			we can add ternary operator condition in nav bar instagram logo 
+----
+<Link to={state?"/":"/Signin"} className="brand-logo">Instagram</Link>
+----
+
+
+
+---------------------------------------------------------------------------------------------------------------------------
+			STEP 17 (FETCHTHE  THE DATA 'POST' IN THE MAIN SCREEN )
+				first we have enable requiredlogin in server post.js/routes in 'allpost' section 
+---------------
+				so we have to declare 
+
+const [data, setData] = useState ([]);
+  useEffect (() => {
+    //3:14-7/2/21
+    fetch ('/allpost', {
+      headers: {
+       				 //here when we have used requirelogin
+       				 //so the  token should match exact as we hve initilized
+       				 // here in 'Bearer ' there is 1 space which is also important
+
+        Authorization: 'Bearer ' + localStorage.getItem ('jwt'),
+      },
+    })
+      .then (res => res.json ())
+      .then (result => {
+        setData (result.posts);
+      });
+  }, []);
+
+-----------------
+			NOW we will add map function to show the post from mongodb
+
+			inside home function 
+return (
+    <div className="home">
+      {	
+	data.map (item => {
+        return (
+-----------
+			first =   //HERE we WILL PUT OUR STATIC DATA
+--------------------------------------------------------------------------------
+//FOR EG.   
+<div className="card home-card">
+            <h3>Pradhyumn Soni</h3>
+            <div className=" card-image">
+              <img src="https://i.pinimg.com/280x280_RS/5e/e6/50/5ee65021ea0c893cdec6d8e5e5246524.jpg" />
+
+            </div>
+            <div className="card-content">
+              <i className="material-icons" style={{color: 'red'}}>
+                favorite_border
+              </i>
+              <h6>title</h6>
+              <p>this is amazing post</p>
+              <input type="text" placeholder="Add a comment" />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+--------------------------------------------------------------------------------
+			secondly we will change it to dynamic  our post 
+
+
+return (
+          <div className="card home-card" key={item._id}>
+            <h5>{item.postedBy.name}</h5>
+            <div className=" card-image">
+              <img src={item.photo} />
+
+            </div>
+            <div className="card-content">
+              <i className="material-icons" style={{color: 'red'}}>
+                favorite_border
+              </i>
+              <h6>{item.title}</h6>
+              <p>{item.body}</p>
+              <input type="text" placeholder="Add a comment" />
+            </div>
+          </div>
+        );
+	)
+})
+   
+----------------------------------------------------------------------------------------------------------
+			STEP 18 	NOW macking logout button  in navbar
+
+------- now adding in if condition  array --------
+
+ <li>
+          <button
+            className="btn waves-effect waves.light #64b5f6 blue darken-2"
+            onClick={() => {
+              localStorage.clear ();
+              dispatch ({type: 'CLEAR'});
+              history.push ('/Signin');
+            }}
+          >
+            Log out
+          </button>
+        </li>,				
+				
+------ AS WELL AS adding if condition in userReducer.js also 
+
+if (action.type == 'CLEAR') {
+    return null;
+  }
+------
+
+---------------------------------------------------------------------------------------------------
+		STEP 19 (dynamic Profile page ) 7/2/21
+
+		here we will usse useState,usecontext,useeffect
+			here useState will provide the full detail of the user  from wih we will fetch photos
+			here useContext will provide USERCONTEXT from the mail app.js where we will get the id of user
+			here useeffect will first have 0 dependency fetch the mypost detail     so that it will run first then other functions
+
+
+			using map function to fetch the total post by user
+			 
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+		STEP 20 (making API for like and unlike post) 15 /2/21
+		here we will first add like array in sschema of like
+
+likes :[ {type:ObjectId,ref:"User"}],
+
+	  	then we will make apis of like and unlike in posrt.js (router)
+		we will make two api  
+		FIRST     1  FOR "/LIKE"
+		SECOND 2 FOR "/UNLIKE"
+
+	
+router.put ('/unlike', requirelogin, (req, res) => {
+  Post.findByIdAndUpdate (
+    req.body.postId,
+    {
+      //here we are using $pull to remove somthing from  an arrray
+      $pull: {likes: req.user._id},
+    },
+    {
+      //TO GET UPDATE we write new:true
+      new: true,
+    }
+  ).exec ((err, result) => {
+    if (err) {
+      return res, status (422).json ({error: err});
+    } else {
+      res.json (result);
+    }
+  });
+});
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+		STEP 21 ( linking like and unlike post) 19 /2/21
+		
+		here we are just linking using to const like  and unlike function wich will get call as pr  click 
+		now to use that function we need usestate,useeffect,usecontext from react 
+		and  Usercontext from react-dom
+
+
+/////////////////fetching like api ////////////////////////////////////////////
+
+const likepost = id => {
+    console.log ('you liked this post');
+    fetch ('/like', {
+      method: 'put',
+      headers: {
+        'Content-type': 'application/json',
+        Authorization: 'Bearer ' + localStorage.getItem ('jwt'),
+      },
+      body: JSON.stringify ({
+        postId: id,
+      }),
+    })
+      .then (res => res.json ())
+      .then (result => {
+        const newData = data.map (item => {
+          if ((item._id = result._id)) {
+            return result;
+          } else {
+            return item;
+          }
+        });
+        setData (newData);
+      })
+      .catch (err => {
+        console.log (err);
+      });
+  };
+*************************************************************************
+/////////////////fetching unlike api////////////////////////////////////////////
+const unlikepost = id => {
+    console.log ('you unliked this post');
+    fetch ('/unlike', {
+      method: 'put',
+      headers: {
+        'Content-type': 'application/json',
+        Authorization: 'Bearer ' + localStorage.getItem ('jwt'),
+      },
+      body: JSON.stringify ({
+        postId: id,
+      }),
+    })
+      .then (res => res.json ())
+      .then (result => {
+        const newData = data.map (item => {
+          if ((item._id = result._id)) {
+            return result;
+          } else {
+            return item;
+          }
+        });
+        setData (newData);
+      })
+      .catch (err => {
+        console.log (err);
+      });
+  };
+
+
+*************************************************************************
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+		STEP 22 (COMMENT API)
+
+		it will be similar to the previous one 
+
+		1) we will add commentschema  inside  post schema 
+-----
+comments: [
+    {
+      text: String,
+      postedBy: {type: ObjectId, ref: 'User'},
+    },
+  ],
+-----
+
+
+		2) we will add routes in post routes  and then our backend part is ready 	
+-----------
+router.put ('/comment', requirelogin, (req, res) => {
+  const comment = {
+    //here we will get the text and the id from front-end then we will put it into data 
+    text:req.body.text,
+    postedBy:req.user._id // but here to get this id we have to popullate it 
+  }
+  Post.findByIdAndUpdate(
+    req.body.postId,{
+      $push: {comments:comment},    
+    },
+    {
+      //TO GET UPDATE we write new:true
+      new: true,
+    }
+  ).populate('comments.postedBy',"_id name")//to get the name of that id
+  .exec ((err, result) => {
+    if (err) {
+      return res, status (422).json ({error: err});
+    } else {
+      res.json (result);
+    }
+  });
+});
+-----------
+*****************************************************************************
+--------------------------------------------------------------------------------------------------------------------------
+		STEP 23 (implementing it to front end)
+
+		now on home page we will write new arrow function 
+
+----
+const makeComment = (text, postId) => {
+    //makeing request
+    fetch ('/comment', {
+      method: 'put',
+      headers: {
+        'Content-type': 'application/json',
+        Authorization: 'Bearer ' + localStorage.getItem ('jwt'),
+      },
+      body: JSON.stringify ({
+        postId,
+        text,
+      }),
+    })
+      .then (res => res.json ())
+      .then (result => {
+        console.log (result);
+        const newData = data.map (item => {
+          if (item._id === result._id) {
+            return result;
+          } else {
+            return item;
+          }
+        });
+        setData (newData);
+      })
+      .catch (err => {
+        console.log (err);
+      });
+  };
+----
+		we will make new from in the jsx for comment
+-----
+<form
+                onSubmit={e => {
+                  e.preventDefault ();
+                  makeComment (e.target[0].value,item._id);
+                }}
+              >
+                <input
+                  type="text"
+                  placeholder="Add a comment"
+
+                  /* here setstate hook was not used   */
+                  
+                />
+              </form>
+-----
+	
+		As we were facing the name  not visible issue  
+		for that we have to populate the posted by ,_id  name      in  server   post routes  
+
+---------------------in fetch('/allpost')------------------
+		adding
+ .populate ('comments.postedBy', '_id name')
+-----------------------------------------------------------
+
+---------------------in fetch('/allpost')------------------
+		adding 
+.populate ('postedBy', '_id name')
+
+
+*****************************************************************************
+--------------------------------------------------------------------------------------------------------------------------
+		STEP 24 (Api for  deleting the comment)
+
+
+
+
+
+
+
+
+
